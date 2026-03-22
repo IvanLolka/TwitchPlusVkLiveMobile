@@ -27,18 +27,12 @@
                     android:text="@string/settings_auth_title"
                     android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
 
-                <com.google.android.material.textfield.TextInputLayout
+                <TextView
+                    android:id="@+id/twitchClientIdText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:hint="@string/hint_twitch_client_id">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/twitchClientIdInput"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="textNoSuggestions" />
-                </com.google.android.material.textfield.TextInputLayout>
+                    android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
@@ -51,32 +45,6 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="textUri" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:hint="@string/hint_vk_client_id">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/vkClientIdInput"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="textNoSuggestions" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:hint="@string/hint_vk_nickname">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/vkNicknameInput"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="textNoSuggestions" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.button.MaterialButton

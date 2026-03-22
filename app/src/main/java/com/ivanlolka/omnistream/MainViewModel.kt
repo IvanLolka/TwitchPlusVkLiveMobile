@@ -87,17 +87,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application), T
         addSystemMessage("Настройте Twitch/VK и запустите сканирование подписок.")
     }
 
-    fun updateSettings(
-        twitchClientId: String,
-        twitchRedirectUrl: String,
-        vkClientId: String,
-        vkDefaultNickname: String
-    ) {
+    fun updateSettings(twitchRedirectUrl: String) {
         val updated = _authState.value.copy(
-            twitchClientId = twitchClientId.trim(),
-            twitchRedirectUrl = twitchRedirectUrl.trim(),
-            vkClientId = vkClientId.trim(),
-            vkDefaultNickname = vkDefaultNickname.trim()
+            twitchRedirectUrl = twitchRedirectUrl.trim()
         )
         persistAuthState(updated)
     }

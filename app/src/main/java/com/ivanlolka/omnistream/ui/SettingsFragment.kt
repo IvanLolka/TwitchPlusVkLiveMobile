@@ -23,11 +23,9 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val twitchClientIdInput = view.findViewById<TextInputEditText>(R.id.twitchClientIdInput)
         val twitchRedirectInput = view.findViewById<TextInputEditText>(R.id.twitchRedirectInput)
-        val vkClientIdInput = view.findViewById<TextInputEditText>(R.id.vkClientIdInput)
-        val vkNicknameInput = view.findViewById<TextInputEditText>(R.id.vkNicknameInput)
         val saveButton = view.findViewById<MaterialButton>(R.id.saveSettingsButton)
+        val twitchClientIdText = view.findViewById<TextView>(R.id.twitchClientIdText)
         val twitchRedirectText = view.findViewById<TextView>(R.id.twitchRedirectText)
         val vkRedirectText = view.findViewById<TextView>(R.id.vkRedirectText)
         val sessionStateText = view.findViewById<TextView>(R.id.sessionStateText)
@@ -36,14 +34,10 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
         twitchRedirectText.text = "Twitch redirect: ${OAuthUrlFactory.twitchRedirectUri()}"
         vkRedirectText.text = "VK redirect: ${OAuthUrlFactory.vkRedirectUri()}"
+        twitchClientIdText.text = "Twitch Client ID: ${viewModel.authState.value.twitchClientId}"
 
         saveButton.setOnClickListener {
-            viewModel.updateSettings(
-                twitchClientId = twitchClientIdInput.text?.toString().orEmpty(),
-                twitchRedirectUrl = twitchRedirectInput.text?.toString().orEmpty(),
-                vkClientId = vkClientIdInput.text?.toString().orEmpty(),
-                vkDefaultNickname = vkNicknameInput.text?.toString().orEmpty()
-            )
+            viewModel.updateSettings(twitchRedirectUrl = twitchRedirectInput.text?.toString().orEmpty())
             Toast.makeText(requireContext(), getString(R.string.settings_saved), Toast.LENGTH_SHORT).show()
         }
 
@@ -54,18 +48,10 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
                     viewModel.authState.collect { auth ->
-                        if (twitchClientIdInput.text.isNullOrBlank()) {
-                            twitchClientIdInput.setText(auth.twitchClientId)
-                        }
-                        if (vkClientIdInput.text.isNullOrBlank()) {
-                            vkClientIdInput.setText(auth.vkClientId)
-                        }
                         if (twitchRedirectInput.text.isNullOrBlank()) {
                             twitchRedirectInput.setText(auth.twitchRedirectUrl)
                         }
-                        if (vkNicknameInput.text.isNullOrBlank()) {
-                            vkNicknameInput.setText(auth.vkDefaultNickname)
-                        }
+                        twitchClientIdText.text = "Twitch Client ID: ${auth.twitchClientId}"
 
                         val activeRedirect = auth.twitchRedirectUrl.ifBlank { OAuthUrlFactory.twitchRedirectUri() }
                         twitchRedirectText.text = "Twitch redirect (active): $activeRedirect"

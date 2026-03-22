@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OmniStream Twitch OAuth Redirect</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+    .card {
+      width: min(560px, 100%);
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 16px;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    h1 { margin: 0 0 12px; font-size: 20px; }
+    p { margin: 8px 0; line-height: 1.4; }
+    code {
+      display: block;
+      padding: 10px;
+      border-radius: 10px;
+      background: #0b1220;
+      border: 1px solid #243247;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Переадресация в OmniStream</h1>
+    <p>Если приложение не открылось автоматически, проверьте установку OmniStream.</p>
+    <p>Текущий deep link:</p>
+    <code id="link"></code>
+  </div>
+
+  <script>
+    (function () {
+      var suffix = window.location.hash || window.location.search || "";
+      var deepLink = "omnistream://oauth/twitch" + suffix;
+      document.getElementById("link").textContent = deepLink;
+      window.location.replace(deepLink);
+    })();
+  </script>
+</body>
+</html>

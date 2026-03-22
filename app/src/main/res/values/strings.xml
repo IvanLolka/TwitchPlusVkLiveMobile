@@ -1,0 +1,59 @@
+<resources>
+    <string name="app_name">OmniStream</string>
+
+    <string name="tab_feed">Лента</string>
+    <string name="tab_watch">Смотреть</string>
+    <string name="tab_settings">Настройки</string>
+    <string name="tab_player">Плеер</string>
+    <string name="tab_chat">Чат</string>
+
+    <string name="auth_section_title">Авторизация платформ</string>
+    <string name="twitch_auth_title">Twitch</string>
+    <string name="vk_auth_title">VK Live</string>
+    <string name="authorized">Авторизовано</string>
+    <string name="not_authorized">Не авторизовано</string>
+    <string name="auth_twitch">Войти через Twitch</string>
+    <string name="auth_vk">Войти через VK</string>
+    <string name="refresh_subscriptions">Сканировать подписки</string>
+    <string name="scanning">Сканирование…</string>
+    <string name="streams_title">Кто сейчас в эфире</string>
+    <string name="no_live_streams">Пока нет активных стримов. Нажмите «Сканировать подписки».</string>
+
+    <string name="hint_twitch_client_id">Client ID Twitch</string>
+    <string name="hint_twitch_redirect_url">Twitch Redirect URL (GitHub Pages)</string>
+    <string name="hint_vk_client_id">Client ID VK</string>
+    <string name="hint_vk_nickname">Ник VK по умолчанию (опционально)</string>
+    <string name="vk_auth_temporarily_disabled">VK авторизация временно отключена</string>
+
+    <string name="save">Сохранить</string>
+    <string name="cancel">Отмена</string>
+    <string name="open_stream_options">Как открыть стрим</string>
+    <string name="watch_native">Смотреть на исходной платформе</string>
+    <string name="select_pair_platform">Связать с каналом второй платформы</string>
+    <string name="enter_manually">Ввести вручную</string>
+    <string name="input_channel_title">Введите ник канала</string>
+    <string name="confirm">Ок</string>
+
+    <string name="player_title">Текущий просмотр</string>
+    <string name="player_hint">Выберите стрим в ленте</string>
+    <string name="source_twitch">Twitch</string>
+    <string name="source_vk">VK Live</string>
+    <string name="linked_channels">Связка каналов</string>
+    <string name="twitch_channel_label">Twitch: %1$s</string>
+    <string name="vk_channel_label">VK: %1$s</string>
+
+    <string name="chat_title">Общий чат</string>
+    <string name="chat_route_hint">Сообщение отправляется единым сообщением в доступные платформы</string>
+    <string name="chat_connection">Подключение Twitch: %1$s</string>
+    <string name="chat_targets">Цели отправки: %1$s</string>
+    <string name="chat_message_hint">Написать сообщение</string>
+    <string name="send">Отправить</string>
+
+    <string name="settings_auth_title">OAuth и ключи приложений</string>
+    <string name="oauth_redirect_title">Redirect URI для кабинета разработчика</string>
+    <string name="settings_session_title">Сессии аккаунтов</string>
+    <string name="save_settings">Сохранить настройки</string>
+    <string name="settings_saved">Настройки сохранены</string>
+    <string name="logout_twitch">Выйти из Twitch</string>
+    <string name="logout_vk">Выйти из VK</string>
+</resources>

@@ -11,7 +11,7 @@ class AppStorage(context: Context) {
     fun readAuthState(): AuthState {
         return AuthState(
             twitchClientId = AuthState().twitchClientId,
-            twitchRedirectUrl = preferences.getString(KEY_TWITCH_REDIRECT_URL, "").orEmpty(),
+            twitchRedirectUrl = AuthState().twitchRedirectUrl,
             vkClientId = preferences.getString(KEY_VK_CLIENT_ID, "").orEmpty(),
             twitchUsername = preferences.getString(KEY_TWITCH_USERNAME, "").orEmpty(),
             twitchAccessToken = preferences.getString(KEY_TWITCH_ACCESS_TOKEN, "").orEmpty(),
@@ -24,7 +24,6 @@ class AppStorage(context: Context) {
 
     fun saveAuthState(state: AuthState) {
         preferences.edit()
-            .putString(KEY_TWITCH_REDIRECT_URL, state.twitchRedirectUrl)
             .putString(KEY_VK_CLIENT_ID, state.vkClientId)
             .putString(KEY_TWITCH_USERNAME, state.twitchUsername)
             .putString(KEY_TWITCH_ACCESS_TOKEN, state.twitchAccessToken)
@@ -60,7 +59,6 @@ class AppStorage(context: Context) {
 
     private companion object {
         const val PREFS_NAME = "omnistream_settings"
-        const val KEY_TWITCH_REDIRECT_URL = "twitch_redirect_url"
         const val KEY_VK_CLIENT_ID = "vk_client_id"
         const val KEY_TWITCH_USERNAME = "twitch_username"
         const val KEY_TWITCH_ACCESS_TOKEN = "twitch_access_token"

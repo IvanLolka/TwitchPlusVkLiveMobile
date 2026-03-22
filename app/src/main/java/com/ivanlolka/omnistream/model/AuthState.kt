@@ -2,7 +2,7 @@ package com.ivanlolka.omnistream.model
 
 data class AuthState(
     val twitchClientId: String = "hhh9xkjdta2nonleh4y8xyn34p0mfb",
-    val twitchRedirectUrl: String = "",
+    val twitchRedirectUrl: String = "https://ivanlolka.github.io/TwitchPlusVkLiveMobile/",
     val vkClientId: String = "",
     val twitchUsername: String = "",
     val twitchAccessToken: String = "",

@@ -1,17 +1,29 @@
-package com.ivanlolka.omnistream.ui
+﻿package com.ivanlolka.omnistream.ui
 
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.LinearLayout
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.button.MaterialButtonToggleGroup
+import com.ivanlolka.omnistream.MainViewModel
 import com.ivanlolka.omnistream.R
+import com.ivanlolka.omnistream.model.LiveStream
+import com.ivanlolka.omnistream.model.Platform
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
 
 class WatchFragment : Fragment(R.layout.fragment_watch) {
 
+    private val viewModel: MainViewModel by activityViewModels()
     private var playerCollapsed = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -26,15 +38,41 @@ class WatchFragment : Fragment(R.layout.fragment_watch) {
         }
 
         val playerHost = view.findViewById<FrameLayout>(R.id.playerHost)
-        val chatHost = view.findViewById<FrameLayout>(R.id.chatHost)
         val collapseBar = view.findViewById<LinearLayout>(R.id.playerCollapseBar)
         val toggleButton = view.findViewById<MaterialButton>(R.id.togglePlayerSizeButton)
+        val platformToggle = view.findViewById<MaterialButtonToggleGroup>(R.id.watchPlatformToggle)
+        val twitchToggle = view.findViewById<MaterialButton>(R.id.watchTwitchToggleButton)
+        val vkToggle = view.findViewById<MaterialButton>(R.id.watchVkToggleButton)
 
         toggleButton.setOnClickListener {
             playerCollapsed = !playerCollapsed
-            applyPlayerState(playerHost, chatHost, collapseBar, toggleButton)
+            applyPlayerState(playerHost, collapseBar, toggleButton)
         }
-        applyPlayerState(playerHost, chatHost, collapseBar, toggleButton)
+
+        platformToggle.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (!isChecked) return@addOnButtonCheckedListener
+            when (checkedId) {
+                R.id.watchTwitchToggleButton -> viewModel.switchActivePlatform(Platform.TWITCH)
+                R.id.watchVkToggleButton -> viewModel.switchActivePlatform(Platform.VK)
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    combine(
+                        viewModel.selectedTwitchStream,
+                        viewModel.selectedVkStream,
+                        viewModel.activePlatform
+                    ) { twitch, vk, active -> Triple(twitch, vk, active) }
+                        .collect { (twitch, vk, active) ->
+                            syncToggleState(platformToggle, twitchToggle, vkToggle, active, twitch, vk)
+                        }
+                }
+            }
+        }
+
+        applyPlayerState(playerHost, collapseBar, toggleButton)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -44,33 +82,49 @@ class WatchFragment : Fragment(R.layout.fragment_watch) {
 
     private fun applyPlayerState(
         playerHost: FrameLayout,
-        chatHost: FrameLayout,
         collapseBar: LinearLayout,
         toggleButton: MaterialButton
     ) {
-        val playerParams = playerHost.layoutParams as LinearLayout.LayoutParams
-        val chatParams = chatHost.layoutParams as LinearLayout.LayoutParams
-        val barParams = collapseBar.layoutParams as LinearLayout.LayoutParams
+        val playerParams = playerHost.layoutParams as ConstraintLayout.LayoutParams
+        val barParams = collapseBar.layoutParams as ConstraintLayout.LayoutParams
 
         if (playerCollapsed) {
             playerParams.height = dp(42)
-            playerParams.weight = 0f
-            chatParams.height = 0
-            chatParams.weight = 1f
+            playerParams.dimensionRatio = null
             barParams.height = dp(14)
-            toggleButton.text = "˄"
+            toggleButton.text = "^"
         } else {
             playerParams.height = 0
-            playerParams.weight = 11f
-            chatParams.height = 0
-            chatParams.weight = 9f
+            playerParams.dimensionRatio = "16:9"
             barParams.height = dp(22)
-            toggleButton.text = "˅"
+            toggleButton.text = "v"
         }
 
         playerHost.layoutParams = playerParams
-        chatHost.layoutParams = chatParams
         collapseBar.layoutParams = barParams
+    }
+
+    private fun syncToggleState(
+        toggleGroup: MaterialButtonToggleGroup,
+        twitchToggle: MaterialButton,
+        vkToggle: MaterialButton,
+        active: Platform,
+        twitch: LiveStream?,
+        vk: LiveStream?
+    ) {
+        twitchToggle.isEnabled = twitch != null
+        vkToggle.isEnabled = vk != null
+
+        val desired = when {
+            active == Platform.TWITCH && twitch != null -> R.id.watchTwitchToggleButton
+            active == Platform.VK && vk != null -> R.id.watchVkToggleButton
+            twitch != null -> R.id.watchTwitchToggleButton
+            vk != null -> R.id.watchVkToggleButton
+            else -> R.id.watchTwitchToggleButton
+        }
+        if (toggleGroup.checkedButtonId != desired) {
+            toggleGroup.check(desired)
+        }
     }
 
     private fun dp(value: Int): Int {

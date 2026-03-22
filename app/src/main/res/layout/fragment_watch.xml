@@ -1,32 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:paddingHorizontal="8dp"
+    android:paddingTop="6dp">
+
+    <LinearLayout
+        android:id="@+id/watchHeader"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/watchTitleText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/tab_watch"
+            android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/watchPlatformToggle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:selectionRequired="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/watchTwitchToggleButton"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                android:minWidth="74dp"
+                android:text="@string/source_twitch"
+                android:textSize="11sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/watchVkToggleButton"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                android:minWidth="66dp"
+                android:text="@string/source_vk"
+                android:textSize="11sp" />
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+    </LinearLayout>
 
     <FrameLayout
         android:id="@+id/playerHost"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_weight="11" />
+        android:layout_marginTop="6dp"
+        app:layout_constraintDimensionRatio="16:9"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/watchHeader" />
 
     <LinearLayout
         android:id="@+id/playerCollapseBar"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="22dp"
         android:background="#18202D"
         android:gravity="center"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/playerHost">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/togglePlayerSizeButton"
             style="?attr/materialButtonOutlinedStyle"
             android:layout_width="44dp"
             android:layout_height="18dp"
+            android:insetBottom="0dp"
+            android:insetTop="0dp"
             android:minHeight="0dp"
             android:minWidth="0dp"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
             android:padding="0dp"
             android:text="˅"
             android:textSize="11sp" />
@@ -34,8 +88,11 @@
 
     <FrameLayout
         android:id="@+id/chatHost"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_weight="9" />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/playerCollapseBar" />
 
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

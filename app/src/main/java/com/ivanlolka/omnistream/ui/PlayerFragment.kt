@@ -1,4 +1,4 @@
-package com.ivanlolka.omnistream.ui
+﻿package com.ivanlolka.omnistream.ui
 
 import android.annotation.SuppressLint
 import android.os.Bundle
@@ -11,8 +11,6 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.button.MaterialButtonToggleGroup
 import com.ivanlolka.omnistream.MainViewModel
 import com.ivanlolka.omnistream.R
 import com.ivanlolka.omnistream.model.LiveStream
@@ -24,32 +22,21 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
 
     private val viewModel: MainViewModel by activityViewModels()
     private lateinit var playerWebView: WebView
-    private lateinit var toggleGroup: MaterialButtonToggleGroup
-    private lateinit var twitchToggle: MaterialButton
-    private lateinit var vkToggle: MaterialButton
+
+    private var lastActivePlatform: Platform = Platform.TWITCH
+    private var lastTwitchStream: LiveStream? = null
+    private var lastVkStream: LiveStream? = null
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         playerWebView = view.findViewById(R.id.playerWebView)
-        toggleGroup = view.findViewById(R.id.platformToggle)
-        twitchToggle = view.findViewById(R.id.twitchToggleButton)
-        vkToggle = view.findViewById(R.id.vkToggleButton)
-
         playerWebView.settings.javaScriptEnabled = true
         playerWebView.settings.domStorageEnabled = true
         playerWebView.settings.mediaPlaybackRequiresUserGesture = false
         playerWebView.webChromeClient = WebChromeClient()
         playerWebView.webViewClient = object : WebViewClient() {}
-
-        toggleGroup.addOnButtonCheckedListener { _, checkedId, isChecked ->
-            if (!isChecked) return@addOnButtonCheckedListener
-            when (checkedId) {
-                R.id.twitchToggleButton -> viewModel.switchActivePlatform(Platform.TWITCH)
-                R.id.vkToggleButton -> viewModel.switchActivePlatform(Platform.VK)
-            }
-        }
 
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -60,7 +47,9 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
                         viewModel.activePlatform
                     ) { twitch, vk, active -> Triple(twitch, vk, active) }
                         .collect { (twitch, vk, active) ->
-                            syncToggleState(active, twitch, vk)
+                            lastActivePlatform = active
+                            lastTwitchStream = twitch
+                            lastVkStream = vk
                             render(active, twitch, vk)
                         }
                 }
@@ -68,27 +57,22 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         }
     }
 
-    private fun syncToggleState(active: Platform, twitch: LiveStream?, vk: LiveStream?) {
-        twitchToggle.isEnabled = twitch != null
-        vkToggle.isEnabled = vk != null
+    override fun onResume() {
+        super.onResume()
+        playerWebView.onResume()
+        render(lastActivePlatform, lastTwitchStream, lastVkStream)
+    }
 
-        val desired = when {
-            active == Platform.TWITCH && twitch != null -> R.id.twitchToggleButton
-            active == Platform.VK && vk != null -> R.id.vkToggleButton
-            twitch != null -> R.id.twitchToggleButton
-            vk != null -> R.id.vkToggleButton
-            else -> R.id.twitchToggleButton
-        }
-        if (toggleGroup.checkedButtonId != desired) {
-            toggleGroup.check(desired)
-        }
+    override fun onPause() {
+        playerWebView.onPause()
+        super.onPause()
     }
 
     private fun render(active: Platform, twitch: LiveStream?, vk: LiveStream?) {
         when (active) {
             Platform.TWITCH -> {
                 if (twitch == null) {
-                    playerWebView.loadData(buildEmptyHtml("Выберите Twitch-стрим"), "text/html", "UTF-8")
+                    playerWebView.loadData(buildEmptyHtml("Select Twitch stream"), "text/html", "UTF-8")
                     return
                 }
                 playerWebView.loadDataWithBaseURL(
@@ -102,12 +86,12 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
 
             Platform.VK -> {
                 if (vk == null) {
-                    playerWebView.loadData(buildEmptyHtml("Выберите VK-стрим"), "text/html", "UTF-8")
+                    playerWebView.loadData(buildEmptyHtml("Select VK stream"), "text/html", "UTF-8")
                     return
                 }
                 val url = vk.watchUrl.orEmpty()
                 if (url.isBlank()) {
-                    playerWebView.loadData(buildEmptyHtml("У VK-стрима нет URL для открытия"), "text/html", "UTF-8")
+                    playerWebView.loadData(buildEmptyHtml("VK stream URL is missing"), "text/html", "UTF-8")
                     return
                 }
                 playerWebView.loadUrl(url)

@@ -89,6 +89,11 @@ class MainActivity : AppCompatActivity() {
         handleOAuthIntent(intent)
     }
 
+    override fun onStart() {
+        super.onStart()
+        viewModel.onAppForeground()
+    }
+
     private fun handleOAuthIntent(intent: Intent?) {
         if (intent?.action != ACTION_PROCESS_OAUTH_CALLBACK) return
         val providerName = intent.getStringExtra(EXTRA_OAUTH_PROVIDER) ?: return

@@ -51,4 +51,8 @@
   <string name="logout_vk">Выйти из VK</string>
   <string name="emotes">Эмоты</string>
   <string name="emote_search_hint">Поиск эмоута</string>
-</resources>
+  <string name="emote_cat_all">All</string>
+  <string name="emote_cat_twitch_channel">Twitch Channel</string>
+  <string name="emote_cat_twitch_global">Twitch Global</string>
+  <string name="emote_cat_7tv_channel">7TV Channel</string>
+  <string name="emote_cat_7tv_global">7TV Global</string></resources>

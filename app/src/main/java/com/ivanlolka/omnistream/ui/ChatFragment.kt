@@ -1,4 +1,4 @@
-package com.ivanlolka.omnistream.ui
+﻿package com.ivanlolka.omnistream.ui
 
 import android.os.Bundle
 import android.view.KeyEvent
@@ -19,10 +19,12 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.textfield.TextInputEditText
 import com.ivanlolka.omnistream.MainViewModel
 import com.ivanlolka.omnistream.R
 import com.ivanlolka.omnistream.model.ChatEmote
+import com.ivanlolka.omnistream.model.EmoteCategory
 import kotlinx.coroutines.launch
 
 class ChatFragment : Fragment(R.layout.fragment_chat) {
@@ -31,6 +33,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat) {
     private val chatAdapter = UnifiedChatAdapter()
     private var emoteUrlByCode: Map<String, String> = emptyMap()
     private var allEmotes: List<ChatEmote> = emptyList()
+    private var inputStyler: InputEmoteStyler? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -40,6 +43,8 @@ class ChatFragment : Fragment(R.layout.fragment_chat) {
         val sendButton = view.findViewById<MaterialButton>(R.id.sendButton)
         val emotesButton = view.findViewById<MaterialButton>(R.id.emotesButton)
         val messagePreviewText = view.findViewById<TextView>(R.id.messagePreviewText)
+
+        inputStyler = InputEmoteStyler(messageInput)
 
         recycler.layoutManager = LinearLayoutManager(requireContext())
         recycler.adapter = chatAdapter
@@ -54,13 +59,14 @@ class ChatFragment : Fragment(R.layout.fragment_chat) {
         sendButton.setOnClickListener { sendMessage() }
         emotesButton.setOnClickListener {
             if (allEmotes.isEmpty()) {
-                Toast.makeText(requireContext(), "Эмоты еще загружаются", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Emotes are still loading", Toast.LENGTH_SHORT).show()
             } else {
                 showEmotePicker(messageInput)
             }
         }
 
         messageInput.doAfterTextChanged { editable ->
+            inputStyler?.apply()
             updateMessagePreview(messagePreviewText, editable?.toString().orEmpty())
         }
 
@@ -90,6 +96,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat) {
                     viewModel.chatEmoteUrlMap.collect { emotes ->
                         emoteUrlByCode = emotes
                         chatAdapter.submitEmoteMap(emotes)
+                        inputStyler?.updateEmoteMap(emotes)
                         updateMessagePreview(messagePreviewText, messageInput.text?.toString().orEmpty())
                     }
                 }
@@ -103,11 +110,19 @@ class ChatFragment : Fragment(R.layout.fragment_chat) {
         }
     }
 
+    override fun onDestroyView() {
+        inputStyler?.clear()
+        inputStyler = null
+        super.onDestroyView()
+    }
+
     private fun showEmotePicker(messageInput: TextInputEditText) {
         val dialog = BottomSheetDialog(requireContext())
         val root = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_emote_picker, null, false)
         val searchInput = root.findViewById<TextInputEditText>(R.id.emoteSearchInput)
         val recycler = root.findViewById<RecyclerView>(R.id.emoteRecycler)
+        val categoryToggle = root.findViewById<MaterialButtonToggleGroup>(R.id.emoteCategoryToggle)
+
         val adapter = EmotePickerAdapter { emote ->
             insertEmote(messageInput, emote.code)
             dialog.dismiss()
@@ -115,16 +130,30 @@ class ChatFragment : Fragment(R.layout.fragment_chat) {
 
         recycler.layoutManager = GridLayoutManager(requireContext(), 5)
         recycler.adapter = adapter
-        adapter.submitList(allEmotes)
+        categoryToggle.check(R.id.filterAllButton)
 
-        searchInput.doAfterTextChanged { editable ->
-            val query = editable?.toString().orEmpty().trim().lowercase()
-            if (query.isBlank()) {
-                adapter.submitList(allEmotes)
-            } else {
-                adapter.submitList(allEmotes.filter { it.code.lowercase().contains(query) })
+        fun applyFilter() {
+            val query = searchInput.text?.toString().orEmpty().trim().lowercase()
+            val selectedCategory = when (categoryToggle.checkedButtonId) {
+                R.id.filterTwitchChannelButton -> EmoteCategory.TWITCH_CHANNEL
+                R.id.filterTwitchGlobalButton -> EmoteCategory.TWITCH_GLOBAL
+                R.id.filterSevenTvChannelButton -> EmoteCategory.SEVEN_TV_CHANNEL
+                R.id.filterSevenTvGlobalButton -> EmoteCategory.SEVEN_TV_GLOBAL
+                else -> null
             }
+
+            val filtered = allEmotes.filter { emote ->
+                (selectedCategory == null || emote.category == selectedCategory) &&
+                    (query.isBlank() || emote.code.lowercase().contains(query))
+            }
+            adapter.submitList(filtered)
         }
+
+        searchInput.doAfterTextChanged { applyFilter() }
+        categoryToggle.addOnButtonCheckedListener { _, _, isChecked ->
+            if (isChecked) applyFilter()
+        }
+        applyFilter()
 
         dialog.setContentView(root)
         dialog.show()

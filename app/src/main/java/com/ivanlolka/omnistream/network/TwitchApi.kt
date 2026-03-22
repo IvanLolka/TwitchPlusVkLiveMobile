@@ -77,6 +77,19 @@ class TwitchApi(
         ).id
     }
 
+    suspend fun fetchUserIdByLogin(authState: AuthState, login: String): Result<String> = withContext(Dispatchers.IO) {
+        runCatching {
+            val endpoint = "https://api.twitch.tv/helix/users".toHttpUrl().newBuilder()
+                .addQueryParameter("login", login)
+                .build()
+                .toString()
+            val payload = executeHelixRequest(endpoint, authState)
+            val data = payload.optJSONArray("data")
+            if (data == null || data.length() == 0) error("Twitch user not found: $login")
+            data.getJSONObject(0).optString("id")
+        }
+    }
+
     suspend fun fetchCurrentUserProfile(clientId: String, accessToken: String): UserProfile = withContext(Dispatchers.IO) {
         val request = Request.Builder()
             .url("https://api.twitch.tv/helix/users")
@@ -127,23 +140,57 @@ class TwitchApi(
 
     suspend fun fetchGlobalEmotes(authState: AuthState): Result<Map<String, String>> = withContext(Dispatchers.IO) {
         runCatching {
-            val response = executeHelixRequest(
-                endpoint = "https://api.twitch.tv/helix/chat/emotes/global",
+            fetchPaginatedEmotes(
+                baseUrl = "https://api.twitch.tv/helix/chat/emotes/global",
                 authState = authState
             )
-            parseEmoteMap(response.optJSONArray("data"))
         }
     }
 
     suspend fun fetchChannelEmotes(authState: AuthState, broadcasterId: String): Result<Map<String, String>> = withContext(Dispatchers.IO) {
         runCatching {
-            val endpoint = "https://api.twitch.tv/helix/chat/emotes".toHttpUrl()
-                .newBuilder()
-                .addQueryParameter("broadcaster_id", broadcasterId)
-                .build()
-                .toString()
-            val response = executeHelixRequest(endpoint, authState)
-            parseEmoteMap(response.optJSONArray("data"))
+            fetchPaginatedEmotes(
+                baseUrl = "https://api.twitch.tv/helix/chat/emotes",
+                authState = authState,
+                query = mapOf("broadcaster_id" to broadcasterId)
+            )
+        }
+    }
+
+    suspend fun fetchUserEmotes(
+        authState: AuthState,
+        broadcasterId: String
+    ): Result<Map<String, String>> = withContext(Dispatchers.IO) {
+        runCatching {
+            val userId = authState.twitchUserId
+            if (userId.isBlank()) return@runCatching emptyMap()
+            fetchPaginatedEmotes(
+                baseUrl = "https://api.twitch.tv/helix/chat/emotes/user",
+                authState = authState,
+                query = mapOf(
+                    "user_id" to userId,
+                    "broadcaster_id" to broadcasterId
+                )
+            )
+        }
+    }
+
+    suspend fun fetchEmotesBySetIds(
+        authState: AuthState,
+        emoteSetIds: List<String>
+    ): Result<Map<String, String>> = withContext(Dispatchers.IO) {
+        runCatching {
+            val ids = emoteSetIds.filter { it.isNotBlank() }.distinct()
+            if (ids.isEmpty()) return@runCatching emptyMap()
+
+            val result = LinkedHashMap<String, String>()
+            ids.chunked(MAX_SET_IDS_PER_REQUEST).forEach { chunk ->
+                val builder = "https://api.twitch.tv/helix/chat/emotes/set".toHttpUrl().newBuilder()
+                chunk.forEach { id -> builder.addQueryParameter("emote_set_id", id) }
+                val payload = executeHelixRequest(builder.build().toString(), authState)
+                result.putAll(parseEmoteMap(payload.optJSONArray("data")))
+            }
+            result
         }
     }
 
@@ -193,5 +240,32 @@ class TwitchApi(
             result[code] = "https://static-cdn.jtvnw.net/emoticons/v2/$id/default/dark/2.0"
         }
         return result
+    }
+
+    private fun fetchPaginatedEmotes(
+        baseUrl: String,
+        authState: AuthState,
+        query: Map<String, String> = emptyMap()
+    ): Map<String, String> {
+        val result = LinkedHashMap<String, String>()
+        var cursor: String? = null
+        repeat(MAX_PAGINATION_PAGES) {
+            val builder = baseUrl.toHttpUrl().newBuilder()
+                .addQueryParameter("first", PAGE_SIZE.toString())
+            query.forEach { (key, value) -> builder.addQueryParameter(key, value) }
+            if (!cursor.isNullOrBlank()) builder.addQueryParameter("after", cursor)
+
+            val payload = executeHelixRequest(builder.build().toString(), authState)
+            result.putAll(parseEmoteMap(payload.optJSONArray("data")))
+            cursor = payload.optJSONObject("pagination")?.optString("cursor").orEmpty()
+            if (cursor.isNullOrBlank()) return result
+        }
+        return result
+    }
+
+    private companion object {
+        const val PAGE_SIZE = 100
+        const val MAX_PAGINATION_PAGES = 25
+        const val MAX_SET_IDS_PER_REQUEST = 25
     }
 }

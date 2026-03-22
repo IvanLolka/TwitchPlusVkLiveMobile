@@ -11,6 +11,7 @@ import com.ivanlolka.omnistream.chat.TwitchChatClient
 import com.ivanlolka.omnistream.data.AppStorage
 import com.ivanlolka.omnistream.model.AuthState
 import com.ivanlolka.omnistream.model.ChatEmote
+import com.ivanlolka.omnistream.model.EmoteCategory
 import com.ivanlolka.omnistream.model.EmoteSource
 import com.ivanlolka.omnistream.model.LiveStream
 import com.ivanlolka.omnistream.model.Platform
@@ -42,6 +43,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application), T
 
     private var currentTwitchConnectionKey: String? = null
     private var badgeImageUrlByKey: Map<String, String> = emptyMap()
+    private val loadedTwitchEmoteSetIds = mutableSetOf<String>()
 
     private val _authState = MutableStateFlow(storage.readAuthState())
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
@@ -251,6 +253,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application), T
         _activePlatform.value = platform
     }
 
+    fun onAppForeground() {
+        val canReconnect = _authState.value.isTwitchAuthorized && _selectedTwitchStream.value != null
+        if (canReconnect && _twitchConnectionState.value != TwitchChatClient.ConnectionState.CONNECTED) {
+            currentTwitchConnectionKey = null
+            syncTwitchChatConnection()
+        }
+    }
+
     fun sendUnifiedMessage(message: String) {
         val text = message.trim()
         if (text.isBlank()) return
@@ -289,6 +299,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application), T
     }
 
     override fun onChatMessage(message: TwitchChatClient.IncomingTwitchMessage) {
+        ensureEmoteSetsLoaded(message.emoteSetIds)
         val badgeUrls = message.badgeKeys.mapNotNull { key -> badgeImageUrlByKey[key] }
         appendChatMessage(
             UnifiedChatMessage(
@@ -406,38 +417,91 @@ class MainViewModel(application: Application) : AndroidViewModel(application), T
 
     private fun refreshChatAssets(auth: AuthState, stream: LiveStream) {
         viewModelScope.launch(Dispatchers.IO) {
+            val broadcasterId = resolveBroadcasterId(auth, stream)
+            if (broadcasterId != null && stream.twitchBroadcasterId.isNullOrBlank()) {
+                _selectedTwitchStream.value = stream.copy(twitchBroadcasterId = broadcasterId)
+            }
+
             val mergedBadges = LinkedHashMap<String, String>()
             twitchApi.fetchGlobalBadges(auth).onSuccess { mergedBadges.putAll(it) }
-            val broadcasterId = stream.twitchBroadcasterId.orEmpty()
-            if (broadcasterId.isNotBlank()) {
+            if (!broadcasterId.isNullOrBlank()) {
                 twitchApi.fetchChannelBadges(auth, broadcasterId).onSuccess { mergedBadges.putAll(it) }
             }
 
-            val twitchEmotes = LinkedHashMap<String, String>()
-            twitchApi.fetchGlobalEmotes(auth).onSuccess { twitchEmotes.putAll(it) }
-            if (broadcasterId.isNotBlank()) {
-                twitchApi.fetchChannelEmotes(auth, broadcasterId).onSuccess { twitchEmotes.putAll(it) }
+            val twitchGlobalEmotes = LinkedHashMap<String, String>()
+            val twitchChannelEmotes = LinkedHashMap<String, String>()
+            twitchApi.fetchGlobalEmotes(auth).onSuccess { twitchGlobalEmotes.putAll(it) }
+            if (!broadcasterId.isNullOrBlank()) {
+                twitchApi.fetchChannelEmotes(auth, broadcasterId).onSuccess { twitchChannelEmotes.putAll(it) }
+                twitchApi.fetchUserEmotes(auth, broadcasterId).onSuccess { twitchChannelEmotes.putAll(it) }
             }
 
-            val sevenTvEmotes = LinkedHashMap<String, String>()
-            sevenTvApi.fetchGlobalEmotes().onSuccess { sevenTvEmotes.putAll(it) }
-            if (broadcasterId.isNotBlank()) {
-                sevenTvApi.fetchChannelEmotes(broadcasterId).onSuccess { sevenTvEmotes.putAll(it) }
+            val sevenTvGlobalEmotes = LinkedHashMap<String, String>()
+            val sevenTvChannelEmotes = LinkedHashMap<String, String>()
+            sevenTvApi.fetchGlobalEmotes().onSuccess { sevenTvGlobalEmotes.putAll(it) }
+            if (!broadcasterId.isNullOrBlank()) {
+                sevenTvApi.fetchChannelEmotes(broadcasterId).onSuccess { sevenTvChannelEmotes.putAll(it) }
             }
 
             val mergedEmotes = LinkedHashMap<String, String>()
-            mergedEmotes.putAll(twitchEmotes)
-            sevenTvEmotes.forEach { (code, url) ->
+            mergedEmotes.putAll(twitchGlobalEmotes)
+            mergedEmotes.putAll(twitchChannelEmotes)
+            sevenTvGlobalEmotes.forEach { (code, url) ->
+                if (!mergedEmotes.containsKey(code)) mergedEmotes[code] = url
+            }
+            sevenTvChannelEmotes.forEach { (code, url) ->
                 if (!mergedEmotes.containsKey(code)) mergedEmotes[code] = url
             }
 
-            val picker = mergedEmotes.entries.take(MAX_EMOTE_PICKER_ITEMS).map { (code, url) ->
-                ChatEmote(
-                    code = code,
-                    imageUrl = url,
-                    source = if (twitchEmotes.containsKey(code)) EmoteSource.TWITCH else EmoteSource.SEVEN_TV
-                )
-            }
+            val picker = buildList {
+                twitchChannelEmotes.entries.forEach { (code, url) ->
+                    add(
+                        ChatEmote(
+                            code = code,
+                            imageUrl = url,
+                            source = EmoteSource.TWITCH,
+                            category = EmoteCategory.TWITCH_CHANNEL
+                        )
+                    )
+                }
+                twitchGlobalEmotes.entries.forEach { (code, url) ->
+                    if (twitchChannelEmotes.containsKey(code)) return@forEach
+                    add(
+                        ChatEmote(
+                            code = code,
+                            imageUrl = url,
+                            source = EmoteSource.TWITCH,
+                            category = EmoteCategory.TWITCH_GLOBAL
+                        )
+                    )
+                }
+                sevenTvChannelEmotes.entries.forEach { (code, url) ->
+                    if (twitchChannelEmotes.containsKey(code) || twitchGlobalEmotes.containsKey(code)) return@forEach
+                    add(
+                        ChatEmote(
+                            code = code,
+                            imageUrl = url,
+                            source = EmoteSource.SEVEN_TV,
+                            category = EmoteCategory.SEVEN_TV_CHANNEL
+                        )
+                    )
+                }
+                sevenTvGlobalEmotes.entries.forEach { (code, url) ->
+                    if (
+                        twitchChannelEmotes.containsKey(code) ||
+                        twitchGlobalEmotes.containsKey(code) ||
+                        sevenTvChannelEmotes.containsKey(code)
+                    ) return@forEach
+                    add(
+                        ChatEmote(
+                            code = code,
+                            imageUrl = url,
+                            source = EmoteSource.SEVEN_TV,
+                            category = EmoteCategory.SEVEN_TV_GLOBAL
+                        )
+                    )
+                }
+            }.take(MAX_EMOTE_PICKER_ITEMS).sortedBy { it.code.lowercase() }
 
             badgeImageUrlByKey = mergedBadges
             _availableChatEmotes.value = picker
@@ -445,10 +509,60 @@ class MainViewModel(application: Application) : AndroidViewModel(application), T
         }
     }
 
+    private suspend fun resolveBroadcasterId(auth: AuthState, stream: LiveStream): String? {
+        if (!stream.twitchBroadcasterId.isNullOrBlank()) return stream.twitchBroadcasterId
+        return twitchApi.fetchUserIdByLogin(auth, stream.channelName).getOrNull()
+    }
+
     private fun resetChatAssets() {
         badgeImageUrlByKey = emptyMap()
+        loadedTwitchEmoteSetIds.clear()
         _availableChatEmotes.value = emptyList()
         _chatEmoteUrlMap.value = emptyMap()
+    }
+
+    private fun ensureEmoteSetsLoaded(rawSetIds: List<String>) {
+        if (rawSetIds.isEmpty()) return
+        val missing = rawSetIds
+            .map { it.trim() }
+            .filter { it.isNotBlank() && loadedTwitchEmoteSetIds.add(it) }
+        if (missing.isEmpty()) return
+
+        val auth = _authState.value
+        if (!auth.isTwitchAuthorized) return
+
+        viewModelScope.launch(Dispatchers.IO) {
+            twitchApi.fetchEmotesBySetIds(auth, missing)
+                .onSuccess { emotes ->
+                    if (emotes.isEmpty()) return@onSuccess
+                    val mergedMap = LinkedHashMap(_chatEmoteUrlMap.value)
+                    emotes.forEach { (code, url) ->
+                        if (!mergedMap.containsKey(code)) mergedMap[code] = url
+                    }
+                    _chatEmoteUrlMap.value = mergedMap
+
+                    val existingCodes = _availableChatEmotes.value.mapTo(mutableSetOf()) { it.code }
+                    val additions = emotes.entries
+                        .filter { (code, _) -> !existingCodes.contains(code) }
+                        .map { (code, url) ->
+                            ChatEmote(
+                                code = code,
+                                imageUrl = url,
+                                source = EmoteSource.TWITCH,
+                                category = EmoteCategory.TWITCH_CHANNEL
+                            )
+                        }
+                    if (additions.isNotEmpty()) {
+                        _availableChatEmotes.value =
+                            (_availableChatEmotes.value + additions)
+                                .take(MAX_EMOTE_PICKER_ITEMS)
+                                .sortedBy { it.code.lowercase() }
+                    }
+                }
+                .onFailure {
+                    missing.forEach { id -> loadedTwitchEmoteSetIds.remove(id) }
+                }
+        }
     }
 
     private fun appendChatMessage(message: UnifiedChatMessage) {

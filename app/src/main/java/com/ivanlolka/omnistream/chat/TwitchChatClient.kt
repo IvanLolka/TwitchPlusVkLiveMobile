@@ -22,7 +22,8 @@ class TwitchChatClient(
         val displayName: String,
         val text: String,
         val colorHex: String?,
-        val badgeKeys: List<String>
+        val badgeKeys: List<String>,
+        val emoteSetIds: List<String>
     )
 
     enum class ConnectionState {
@@ -121,13 +122,15 @@ class TwitchChatClient(
             val displayName = tags["display-name"].orEmpty().ifBlank { author }
             val color = tags["color"].orEmpty().takeIf { HEX_COLOR_REGEX.matches(it) }
             val badgeKeys = parseBadgeKeys(tags["badges"])
+            val emoteSetIds = parseCsvIds(tags["emote-sets"])
             listener.onChatMessage(
                 IncomingTwitchMessage(
                     author = author,
                     displayName = displayName,
                     text = text,
                     colorHex = color,
-                    badgeKeys = badgeKeys
+                    badgeKeys = badgeKeys,
+                    emoteSetIds = emoteSetIds
                 )
             )
             return
@@ -170,6 +173,13 @@ class TwitchChatClient(
         return raw.split(',')
             .map { it.trim() }
             .filter { it.isNotBlank() && it.contains('/') }
+    }
+
+    private fun parseCsvIds(raw: String?): List<String> {
+        if (raw.isNullOrBlank()) return emptyList()
+        return raw.split(',')
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
     }
 
     private companion object {

@@ -5,7 +5,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 object OAuthUrlFactory {
 
     private const val REDIRECT_BASE = "omnistream://oauth"
-    private const val TWITCH_SCOPE = "chat:read chat:edit user:read:follows moderation:read"
+    private const val TWITCH_SCOPE = "chat:read chat:edit user:read:follows moderation:read user:read:emotes"
     private const val VK_SCOPE = "video,offline"
     private const val VK_API_VERSION = "5.199"
 

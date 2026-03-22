@@ -106,30 +106,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application), T
     }
 
     fun createTwitchOAuthRequest(): Result<OAuthRequest> {
-        val preview = buildTwitchOAuthPreview().getOrElse { return Result.failure(it) }
-        storage.savePendingOAuth(OAuthProvider.TWITCH, preview.state)
-        return Result.success(
-            OAuthRequest(
-                provider = OAuthProvider.TWITCH,
-                authUrl = preview.authUrl
-            )
-        )
-    }
-
-    fun buildTwitchOAuthPreview(): Result<TwitchOAuthPreview> {
         val clientId = _authState.value.twitchClientId
         if (clientId.isBlank()) {
             return Result.failure(IllegalStateException("Укажите Twitch Client ID в настройках."))
         }
         val state = UUID.randomUUID().toString()
         val redirectUri = _authState.value.twitchRedirectUrl.ifBlank { OAuthUrlFactory.twitchRedirectUri() }
+        storage.savePendingOAuth(OAuthProvider.TWITCH, state)
         return Result.success(
-            TwitchOAuthPreview(
-                clientId = clientId,
-                redirectUri = redirectUri,
-                responseType = OAuthUrlFactory.twitchResponseType(),
-                scope = OAuthUrlFactory.twitchScope(),
-                state = state,
+            OAuthRequest(
+                provider = OAuthProvider.TWITCH,
                 authUrl = OAuthUrlFactory.buildTwitchAuthorizeUrl(clientId, state, redirectUri)
             )
         )
@@ -429,11 +415,3 @@ class MainViewModel(application: Application) : AndroidViewModel(application), T
     }
 }
 
-data class TwitchOAuthPreview(
-    val clientId: String,
-    val redirectUri: String,
-    val responseType: String,
-    val scope: String,
-    val state: String,
-    val authUrl: String
-)

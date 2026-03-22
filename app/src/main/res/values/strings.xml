@@ -56,8 +56,5 @@
     <string name="settings_saved">РќР°СЃС‚СЂРѕР№РєРё СЃРѕС…СЂР°РЅРµРЅС‹</string>
     <string name="logout_twitch">Р’С‹Р№С‚Рё РёР· Twitch</string>
     <string name="logout_vk">Р’С‹Р№С‚Рё РёР· VK</string>
-    <string name="twitch_oauth_debug">Twitch OAuth debug</string>
-    <string name="twitch_oauth_dialog_title">Twitch OAuth запрос</string>
-    <string name="copy_link">Скопировать ссылку</string>
-    <string name="open_in_browser">Открыть</string></resources>
+</resources>
 

@@ -6,7 +6,6 @@ object OAuthUrlFactory {
 
     private const val REDIRECT_BASE = "omnistream://oauth"
     private const val TWITCH_SCOPE = "chat:read chat:edit user:read:follows moderation:read"
-    private const val TWITCH_RESPONSE_TYPE = "token"
     private const val VK_SCOPE = "video,offline"
     private const val VK_API_VERSION = "5.199"
 
@@ -14,15 +13,11 @@ object OAuthUrlFactory {
 
     fun vkRedirectUri(): String = "$REDIRECT_BASE/vk"
 
-    fun twitchScope(): String = TWITCH_SCOPE
-
-    fun twitchResponseType(): String = TWITCH_RESPONSE_TYPE
-
     fun buildTwitchAuthorizeUrl(clientId: String, state: String, redirectUri: String): String {
         return "https://id.twitch.tv/oauth2/authorize".toHttpUrl().newBuilder()
             .addQueryParameter("client_id", clientId)
             .addQueryParameter("redirect_uri", redirectUri)
-            .addQueryParameter("response_type", TWITCH_RESPONSE_TYPE)
+            .addQueryParameter("response_type", "token")
             .addQueryParameter("scope", TWITCH_SCOPE)
             .addQueryParameter("force_verify", "true")
             .addQueryParameter("state", state)

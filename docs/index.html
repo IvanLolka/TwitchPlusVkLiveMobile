@@ -1,9 +1,9 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>OmniStream Twitch OAuth Debug</title>
+  <title>OmniStream OAuth Redirect</title>
   <style>
     body {
       margin: 0;
@@ -23,20 +23,13 @@
       border-radius: 16px;
       padding: 20px;
       box-sizing: border-box;
+      text-align: center;
     }
-    h1 { margin: 0 0 12px; font-size: 20px; }
-    p { margin: 8px 0; line-height: 1.4; }
-    code {
-      display: block;
-      padding: 10px;
-      border-radius: 10px;
-      background: #0b1220;
-      border: 1px solid #243247;
-      word-break: break-all;
-    }
+    h1 { margin: 0 0 10px; font-size: 20px; }
+    p { margin: 0; line-height: 1.5; }
     .btn {
       display: inline-block;
-      margin-top: 12px;
+      margin-top: 14px;
       padding: 10px 14px;
       border-radius: 10px;
       background: #14b8a6;
@@ -44,50 +37,19 @@
       text-decoration: none;
       font-weight: 600;
     }
-    .error {
-      margin-top: 10px;
-      padding: 10px;
-      border: 1px solid #7f1d1d;
-      background: #2a1113;
-      border-radius: 10px;
-      color: #fecaca;
-      display: none;
-      line-height: 1.4;
-    }
-    .meta {
-      margin-top: 10px;
-      padding: 10px;
-      border: 1px solid #243247;
-      background: #0b1220;
-      border-radius: 10px;
-      display: none;
-    }
-    .meta p {
-      margin: 4px 0;
-    }
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>OmniStream Twitch OAuth Debug</h1>
-    <p>This page no longer opens the app automatically, so you can inspect the full Twitch response first.</p>
-    <p>Current deep link:</p>
-    <code id="link"></code>
+    <h1>Redirecting to OmniStream</h1>
+    <p>If the app did not open automatically, tap the button below.</p>
     <a id="openAppBtn" class="btn" href="#">Open OmniStream</a>
-    <div id="errorBox" class="error"></div>
-    <div id="metaBox" class="meta">
-      <p><strong>Query:</strong></p>
-      <code id="queryText"></code>
-      <p><strong>Hash:</strong></p>
-      <code id="hashText"></code>
-    </div>
   </div>
 
   <script>
     (function () {
       var suffix = window.location.hash || window.location.search || "";
       var deepLink = "omnistream://oauth/twitch" + suffix;
-      document.getElementById("link").textContent = deepLink;
       var openAppBtn = document.getElementById("openAppBtn");
       openAppBtn.href = deepLink;
       openAppBtn.onclick = function (e) {
@@ -95,21 +57,7 @@
         window.location.href = deepLink;
       };
 
-      var raw = (window.location.hash || window.location.search || "").toLowerCase();
-      var metaBox = document.getElementById("metaBox");
-      var queryText = document.getElementById("queryText");
-      var hashText = document.getElementById("hashText");
-      queryText.textContent = window.location.search || "(empty)";
-      hashText.textContent = window.location.hash || "(empty)";
-      metaBox.style.display = "block";
-
-      if (raw.indexOf("error=redirect_mismatch") >= 0) {
-        var errorBox = document.getElementById("errorBox");
-        errorBox.style.display = "block";
-        errorBox.textContent =
-          "Twitch returned redirect_mismatch. Add this exact URL to Twitch OAuth Redirect URLs and in app settings (Twitch Redirect URL): " +
-          window.location.origin + window.location.pathname;
-      }
+      window.location.replace(deepLink);
     })();
   </script>
 </body>

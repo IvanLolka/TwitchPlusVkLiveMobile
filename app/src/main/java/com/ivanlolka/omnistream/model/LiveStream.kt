@@ -8,6 +8,7 @@ data class LiveStream(
     val title: String,
     val thumbnailUrl: String? = null,
     val watchUrl: String? = null,
+    val twitchBroadcasterId: String? = null,
     val vkOwnerId: String? = null,
     val vkVideoId: String? = null,
     val vkAccessKey: String? = null

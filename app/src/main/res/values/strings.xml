@@ -1,60 +1,64 @@
-<resources>
+﻿<resources>
     <string name="app_name">OmniStream</string>
 
-    <string name="tab_feed">Лента</string>
-    <string name="tab_watch">Смотреть</string>
-    <string name="tab_settings">Настройки</string>
-    <string name="tab_player">Плеер</string>
-    <string name="tab_chat">Чат</string>
+    <string name="tab_feed">Р›РµРЅС‚Р°</string>
+    <string name="tab_watch">РЎРјРѕС‚СЂРµС‚СЊ</string>
+    <string name="tab_settings">РќР°СЃС‚СЂРѕР№РєРё</string>
+    <string name="tab_player">РџР»РµРµСЂ</string>
+    <string name="tab_chat">Р§Р°С‚</string>
 
-    <string name="auth_section_title">Авторизация платформ</string>
+    <string name="auth_section_title">РђРІС‚РѕСЂРёР·Р°С†РёСЏ РїР»Р°С‚С„РѕСЂРј</string>
     <string name="twitch_auth_title">Twitch</string>
     <string name="vk_auth_title">VK Live</string>
-    <string name="authorized">Авторизовано</string>
-    <string name="not_authorized">Не авторизовано</string>
-    <string name="auth_twitch">Войти через Twitch</string>
-    <string name="auth_vk">Войти через VK</string>
-    <string name="refresh_subscriptions">Сканировать подписки</string>
-    <string name="scanning">Сканирование…</string>
-    <string name="streams_title">Кто сейчас в эфире</string>
-    <string name="no_live_streams">Пока нет активных стримов. Нажмите «Сканировать подписки».</string>
+    <string name="authorized">РђРІС‚РѕСЂРёР·РѕРІР°РЅРѕ</string>
+    <string name="not_authorized">РќРµ Р°РІС‚РѕСЂРёР·РѕРІР°РЅРѕ</string>
+    <string name="auth_twitch">Р’РѕР№С‚Рё С‡РµСЂРµР· Twitch</string>
+    <string name="auth_vk">Р’РѕР№С‚Рё С‡РµСЂРµР· VK</string>
+    <string name="refresh_subscriptions">РЎРєР°РЅРёСЂРѕРІР°С‚СЊ РїРѕРґРїРёСЃРєРё</string>
+    <string name="scanning">РЎРєР°РЅРёСЂРѕРІР°РЅРёРµвЂ¦</string>
+    <string name="streams_title">РљС‚Рѕ СЃРµР№С‡Р°СЃ РІ СЌС„РёСЂРµ</string>
+    <string name="no_live_streams">РџРѕРєР° РЅРµС‚ Р°РєС‚РёРІРЅС‹С… СЃС‚СЂРёРјРѕРІ. РќР°Р¶РјРёС‚Рµ В«РЎРєР°РЅРёСЂРѕРІР°С‚СЊ РїРѕРґРїРёСЃРєРёВ».</string>
 
     <string name="hint_twitch_client_id">Client ID Twitch</string>
     <string name="hint_twitch_redirect_url">Twitch Redirect URL (GitHub Pages)</string>
     <string name="hint_vk_client_id">Client ID VK</string>
-    <string name="hint_vk_nickname">Ник VK по умолчанию (опционально)</string>
-    <string name="vk_auth_temporarily_disabled">VK авторизация временно отключена</string>
+    <string name="hint_vk_nickname">РќРёРє VK РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ (РѕРїС†РёРѕРЅР°Р»СЊРЅРѕ)</string>
+    <string name="vk_auth_temporarily_disabled">VK Р°РІС‚РѕСЂРёР·Р°С†РёСЏ РІСЂРµРјРµРЅРЅРѕ РѕС‚РєР»СЋС‡РµРЅР°</string>
 
-    <string name="save">Сохранить</string>
-    <string name="cancel">Отмена</string>
-    <string name="open_stream_options">Как открыть стрим</string>
-    <string name="watch_native">Смотреть на исходной платформе</string>
-    <string name="select_pair_platform">Связать с каналом второй платформы</string>
-    <string name="enter_manually">Ввести вручную</string>
-    <string name="input_channel_title">Введите ник канала</string>
-    <string name="confirm">Ок</string>
+    <string name="save">РЎРѕС…СЂР°РЅРёС‚СЊ</string>
+    <string name="cancel">РћС‚РјРµРЅР°</string>
+    <string name="open_stream_options">РљР°Рє РѕС‚РєСЂС‹С‚СЊ СЃС‚СЂРёРј</string>
+    <string name="watch_native">РЎРјРѕС‚СЂРµС‚СЊ РЅР° РёСЃС…РѕРґРЅРѕР№ РїР»Р°С‚С„РѕСЂРјРµ</string>
+    <string name="select_pair_platform">РЎРІСЏР·Р°С‚СЊ СЃ РєР°РЅР°Р»РѕРј РІС‚РѕСЂРѕР№ РїР»Р°С‚С„РѕСЂРјС‹</string>
+    <string name="enter_manually">Р’РІРµСЃС‚Рё РІСЂСѓС‡РЅСѓСЋ</string>
+    <string name="input_channel_title">Р’РІРµРґРёС‚Рµ РЅРёРє РєР°РЅР°Р»Р°</string>
+    <string name="confirm">РћРє</string>
 
-    <string name="player_title">Текущий просмотр</string>
-    <string name="player_hint">Выберите стрим в ленте</string>
+    <string name="player_title">РўРµРєСѓС‰РёР№ РїСЂРѕСЃРјРѕС‚СЂ</string>
+    <string name="player_hint">Р’С‹Р±РµСЂРёС‚Рµ СЃС‚СЂРёРј РІ Р»РµРЅС‚Рµ</string>
     <string name="source_twitch">Twitch</string>
     <string name="source_vk">VK Live</string>
-    <string name="linked_channels">Связка каналов</string>
+    <string name="linked_channels">РЎРІСЏР·РєР° РєР°РЅР°Р»РѕРІ</string>
     <string name="twitch_channel_label">Twitch: %1$s</string>
     <string name="vk_channel_label">VK: %1$s</string>
 
-    <string name="chat_title">Общий чат</string>
-    <string name="chat_route_hint">Сообщение отправляется единым сообщением в доступные платформы</string>
-    <string name="chat_connection">Подключение Twitch: %1$s</string>
-    <string name="chat_targets">Цели отправки: %1$s</string>
-    <string name="chat_message_hint">Написать сообщение</string>
-    <string name="send">Отправить</string>
+    <string name="chat_title">РћР±С‰РёР№ С‡Р°С‚</string>
+    <string name="chat_route_hint">РЎРѕРѕР±С‰РµРЅРёРµ РѕС‚РїСЂР°РІР»СЏРµС‚СЃСЏ РµРґРёРЅС‹Рј СЃРѕРѕР±С‰РµРЅРёРµРј РІ РґРѕСЃС‚СѓРїРЅС‹Рµ РїР»Р°С‚С„РѕСЂРјС‹</string>
+    <string name="chat_connection">РџРѕРґРєР»СЋС‡РµРЅРёРµ Twitch: %1$s</string>
+    <string name="chat_targets">Р¦РµР»Рё РѕС‚РїСЂР°РІРєРё: %1$s</string>
+    <string name="chat_message_hint">РќР°РїРёСЃР°С‚СЊ СЃРѕРѕР±С‰РµРЅРёРµ</string>
+    <string name="send">РћС‚РїСЂР°РІРёС‚СЊ</string>
 
-    <string name="settings_auth_title">OAuth и ключи приложений</string>
-    <string name="oauth_redirect_title">Redirect URI для кабинета разработчика</string>
-    <string name="settings_session_title">Сессии аккаунтов</string>
-    <string name="save_settings">Сохранить настройки</string>
-    <string name="settings_saved">Настройки сохранены</string>
-    <string name="logout_twitch">Выйти из Twitch</string>
-    <string name="logout_vk">Выйти из VK</string>
+    <string name="settings_auth_title">OAuth Рё РєР»СЋС‡Рё РїСЂРёР»РѕР¶РµРЅРёР№</string>
+    <string name="oauth_redirect_title">Redirect URI РґР»СЏ РєР°Р±РёРЅРµС‚Р° СЂР°Р·СЂР°Р±РѕС‚С‡РёРєР°</string>
+    <string name="settings_session_title">РЎРµСЃСЃРёРё Р°РєРєР°СѓРЅС‚РѕРІ</string>
+    <string name="save_settings">РЎРѕС…СЂР°РЅРёС‚СЊ РЅР°СЃС‚СЂРѕР№РєРё</string>
+    <string name="settings_saved">РќР°СЃС‚СЂРѕР№РєРё СЃРѕС…СЂР°РЅРµРЅС‹</string>
+    <string name="logout_twitch">Р’С‹Р№С‚Рё РёР· Twitch</string>
+    <string name="logout_vk">Р’С‹Р№С‚Рё РёР· VK</string>
+    <string name="emotes">Эмоты</string>
+    <string name="emote_search_hint">Поиск эмоута</string>
 </resources>
+
+
 

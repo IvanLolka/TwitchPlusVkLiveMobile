@@ -6,7 +6,6 @@ import android.view.View
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
@@ -25,7 +24,6 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
 
     private val viewModel: MainViewModel by activityViewModels()
     private lateinit var playerWebView: WebView
-    private lateinit var infoText: TextView
     private lateinit var toggleGroup: MaterialButtonToggleGroup
     private lateinit var twitchToggle: MaterialButton
     private lateinit var vkToggle: MaterialButton
@@ -35,7 +33,6 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         super.onViewCreated(view, savedInstanceState)
 
         playerWebView = view.findViewById(R.id.playerWebView)
-        infoText = view.findViewById(R.id.linkInfoText)
         toggleGroup = view.findViewById(R.id.platformToggle)
         twitchToggle = view.findViewById(R.id.twitchToggleButton)
         vkToggle = view.findViewById(R.id.vkToggleButton)
@@ -74,23 +71,24 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
     private fun syncToggleState(active: Platform, twitch: LiveStream?, vk: LiveStream?) {
         twitchToggle.isEnabled = twitch != null
         vkToggle.isEnabled = vk != null
-        val targetButton = if (active == Platform.TWITCH) R.id.twitchToggleButton else R.id.vkToggleButton
-        if (toggleGroup.checkedButtonId != targetButton) {
-            toggleGroup.check(targetButton)
+
+        val desired = when {
+            active == Platform.TWITCH && twitch != null -> R.id.twitchToggleButton
+            active == Platform.VK && vk != null -> R.id.vkToggleButton
+            twitch != null -> R.id.twitchToggleButton
+            vk != null -> R.id.vkToggleButton
+            else -> R.id.twitchToggleButton
+        }
+        if (toggleGroup.checkedButtonId != desired) {
+            toggleGroup.check(desired)
         }
     }
 
     private fun render(active: Platform, twitch: LiveStream?, vk: LiveStream?) {
-        val twitchLabel = twitch?.displayName ?: "не выбран"
-        val vkLabel = vk?.displayName ?: "не выбран"
-        infoText.text = "${getString(R.string.linked_channels)}\n" +
-            getString(R.string.twitch_channel_label, twitchLabel) + "\n" +
-            getString(R.string.vk_channel_label, vkLabel)
-
         when (active) {
             Platform.TWITCH -> {
                 if (twitch == null) {
-                    playerWebView.loadData("<html><body>Выберите Twitch-стрим</body></html>", "text/html", "UTF-8")
+                    playerWebView.loadData(buildEmptyHtml("Выберите Twitch-стрим"), "text/html", "UTF-8")
                     return
                 }
                 playerWebView.loadDataWithBaseURL(
@@ -104,17 +102,27 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
 
             Platform.VK -> {
                 if (vk == null) {
-                    playerWebView.loadData("<html><body>Выберите VK-стрим</body></html>", "text/html", "UTF-8")
+                    playerWebView.loadData(buildEmptyHtml("Выберите VK-стрим"), "text/html", "UTF-8")
                     return
                 }
                 val url = vk.watchUrl.orEmpty()
                 if (url.isBlank()) {
-                    playerWebView.loadData("<html><body>У VK стрима нет URL для открытия</body></html>", "text/html", "UTF-8")
+                    playerWebView.loadData(buildEmptyHtml("У VK-стрима нет URL для открытия"), "text/html", "UTF-8")
                     return
                 }
                 playerWebView.loadUrl(url)
             }
         }
+    }
+
+    private fun buildEmptyHtml(text: String): String {
+        return """
+            <html>
+              <body style="margin:0;background:#0f1218;color:#aab5cc;display:flex;align-items:center;justify-content:center;font-family:Segoe UI,sans-serif;">
+                $text
+              </body>
+            </html>
+        """.trimIndent()
     }
 
     private fun buildTwitchEmbedHtml(channel: String): String {

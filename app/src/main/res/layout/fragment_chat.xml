@@ -4,56 +4,29 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="12dp">
-
-    <com.google.android.material.card.MaterialCardView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:cardElevation="2dp">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="12dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/chat_title"
-                android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
-
-            <TextView
-                android:id="@+id/connectionStateText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
-
-            <TextView
-                android:id="@+id/chatTargetsText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="@string/chat_route_hint"
-                android:textAppearance="@style/TextAppearance.Material3.LabelSmall" />
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
+    android:paddingHorizontal="10dp"
+    android:paddingTop="6dp"
+    android:paddingBottom="8dp">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/chatRecycler"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="10dp"
         android:layout_weight="1"
         android:clipToPadding="false"
         android:paddingBottom="8dp" />
+
+    <TextView
+        android:id="@+id/messagePreviewText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:background="@drawable/bg_input_preview"
+        android:minHeight="28dp"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="6dp"
+        android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+        android:visibility="gone" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -61,9 +34,19 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/emotesButton"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="0dp"
+            android:paddingHorizontal="10dp"
+            android:text="@string/emotes" />
+
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
             android:layout_weight="1"
             android:hint="@string/chat_message_hint">
 

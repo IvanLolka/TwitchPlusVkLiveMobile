@@ -8,12 +8,34 @@
         android:id="@+id/playerHost"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="6" />
+        android:layout_weight="11" />
+
+    <LinearLayout
+        android:id="@+id/playerCollapseBar"
+        android:layout_width="match_parent"
+        android:layout_height="22dp"
+        android:background="#18202D"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/togglePlayerSizeButton"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="44dp"
+            android:layout_height="18dp"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:padding="0dp"
+            android:text="˅"
+            android:textSize="11sp" />
+    </LinearLayout>
 
     <FrameLayout
         android:id="@+id/chatHost"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="7" />
+        android:layout_weight="9" />
 
 </LinearLayout>

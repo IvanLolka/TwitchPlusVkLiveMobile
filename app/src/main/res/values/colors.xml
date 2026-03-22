@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="brand_primary">#0F766E</color>
-    <color name="brand_on_primary">#FFFFFF</color>
-    <color name="brand_secondary">#EA580C</color>
-    <color name="brand_on_secondary">#FFFFFF</color>
-    <color name="surface_light">#FAFCFB</color>
-    <color name="surface_variant_light">#E7F4F2</color>
-    <color name="on_surface_light">#102A2A</color>
-    <color name="background_top">#E8F8F1</color>
-    <color name="background_bottom">#FFF6EA</color>
-    <color name="card_stroke">#D2E7E3</color>
+    <color name="brand_primary">#43D6B3</color>
+    <color name="brand_on_primary">#0F1218</color>
+    <color name="brand_secondary">#FFB44C</color>
+    <color name="brand_on_secondary">#0F1218</color>
+    <color name="surface_light">#1F2632</color>
+    <color name="surface_variant_light">#171B23</color>
+    <color name="on_surface_light">#F1F5FF</color>
+    <color name="background_top">#1F3355</color>
+    <color name="background_bottom">#0F1218</color>
+    <color name="card_stroke">#2A3344</color>
+    <color name="chat_text">#F1F5FF</color>
+    <color name="chat_muted_text">#AAB5CC</color>
+    <color name="chat_author_default">#43D6B3</color>
 </resources>

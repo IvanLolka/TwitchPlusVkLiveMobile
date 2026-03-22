@@ -2,8 +2,14 @@ package com.ivanlolka.omnistream
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.graphics.Insets
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import com.google.android.material.appbar.MaterialToolbar
@@ -24,8 +30,19 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_main)
-        setSupportActionBar(findViewById<MaterialToolbar>(R.id.toolbar))
+        val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
+        val content = findViewById<View>(R.id.contentContainer)
+        val bottomBar = findViewById<BottomNavigationView>(R.id.bottomNavigation)
+        val root = findViewById<View>(R.id.rootLayout)
+        setSupportActionBar(toolbar)
+
+        ViewCompat.setOnApplyWindowInsetsListener(root) { _, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            applyInsets(toolbar, content, bottomBar, bars)
+            insets
+        }
 
         val manager = supportFragmentManager
         streamsFragment = manager.findFragmentByTag(TAG_FEED) ?: StreamsFragment()
@@ -54,6 +71,17 @@ class MainActivity : AppCompatActivity() {
         bottomNavigation.selectedItemId = R.id.menu_feed
 
         handleOAuthIntent(intent)
+    }
+
+    private fun applyInsets(
+        toolbar: MaterialToolbar,
+        content: View,
+        bottomBar: BottomNavigationView,
+        bars: Insets
+    ) {
+        toolbar.updatePadding(top = bars.top)
+        content.updatePadding(left = bars.left, right = bars.right)
+        bottomBar.updatePadding(left = bars.left, right = bars.right, bottom = bars.bottom)
     }
 
     override fun onNewIntent(intent: Intent) {

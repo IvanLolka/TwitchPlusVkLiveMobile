@@ -1,4 +1,4 @@
-package com.ivanlolka.omnistream.chat
+﻿package com.ivanlolka.omnistream.chat
 
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -12,10 +12,18 @@ class TwitchChatClient(
 ) {
 
     interface Listener {
-        fun onChatMessage(author: String, text: String)
+        fun onChatMessage(message: IncomingTwitchMessage)
         fun onSystemMessage(text: String)
         fun onConnectionStateChanged(state: ConnectionState)
     }
+
+    data class IncomingTwitchMessage(
+        val author: String,
+        val displayName: String,
+        val text: String,
+        val colorHex: String?,
+        val badgeKeys: List<String>
+    )
 
     enum class ConnectionState {
         DISCONNECTED,
@@ -107,21 +115,33 @@ class TwitchChatClient(
 
         val privMatch = PRIVMSG_REGEX.find(line)
         if (privMatch != null) {
-            val author = privMatch.groupValues[1]
-            val text = privMatch.groupValues[3]
-            listener.onChatMessage(author, text)
+            val tags = parseIrcTags(privMatch.groupValues[1])
+            val author = privMatch.groupValues[2]
+            val text = privMatch.groupValues[4]
+            val displayName = tags["display-name"].orEmpty().ifBlank { author }
+            val color = tags["color"].orEmpty().takeIf { HEX_COLOR_REGEX.matches(it) }
+            val badgeKeys = parseBadgeKeys(tags["badges"])
+            listener.onChatMessage(
+                IncomingTwitchMessage(
+                    author = author,
+                    displayName = displayName,
+                    text = text,
+                    colorHex = color,
+                    badgeKeys = badgeKeys
+                )
+            )
             return
         }
 
         val joinMatch = JOIN_REGEX.find(line)
         if (joinMatch != null) {
-            listener.onSystemMessage("${joinMatch.groupValues[1]} вошел(а) в чат")
+            listener.onSystemMessage("${joinMatch.groupValues[2]} вошел(а) в чат")
             return
         }
 
         val partMatch = PART_REGEX.find(line)
         if (partMatch != null) {
-            listener.onSystemMessage("${partMatch.groupValues[1]} вышел(а) из чата")
+            listener.onSystemMessage("${partMatch.groupValues[2]} вышел(а) из чата")
         }
     }
 
@@ -129,10 +149,34 @@ class TwitchChatClient(
         webSocket?.send(command)
     }
 
+    private fun parseIrcTags(raw: String): Map<String, String> {
+        if (raw.isBlank()) return emptyMap()
+        return raw.split(';')
+            .mapNotNull { token ->
+                val idx = token.indexOf('=')
+                if (idx <= 0) return@mapNotNull null
+                val key = token.substring(0, idx)
+                val value = token.substring(idx + 1)
+                    .replace("\\s", " ")
+                    .replace("\\:", ";")
+                    .replace("\\\\", "\\")
+                key to value
+            }
+            .toMap()
+    }
+
+    private fun parseBadgeKeys(raw: String?): List<String> {
+        if (raw.isNullOrBlank()) return emptyList()
+        return raw.split(',')
+            .map { it.trim() }
+            .filter { it.isNotBlank() && it.contains('/') }
+    }
+
     private companion object {
         const val TWITCH_IRC_WS = "wss://irc-ws.chat.twitch.tv:443"
-        val PRIVMSG_REGEX = Regex("^(?:@[^ ]+ )?:([^!]+)!\\S+ PRIVMSG #([^ ]+) :(.*)$")
-        val JOIN_REGEX = Regex("^(?:@[^ ]+ )?:([^!]+)!\\S+ JOIN #([^ ]+)$")
-        val PART_REGEX = Regex("^(?:@[^ ]+ )?:([^!]+)!\\S+ PART #([^ ]+).*$")
+        val PRIVMSG_REGEX = Regex("^(?:@([^ ]+) )?:([^!]+)!\\S+ PRIVMSG #([^ ]+) :(.*)$")
+        val JOIN_REGEX = Regex("^(?:@([^ ]+) )?:([^!]+)!\\S+ JOIN #([^ ]+)$")
+        val PART_REGEX = Regex("^(?:@([^ ]+) )?:([^!]+)!\\S+ PART #([^ ]+).*$")
+        val HEX_COLOR_REGEX = Regex("^#[0-9A-Fa-f]{6}$")
     }
 }

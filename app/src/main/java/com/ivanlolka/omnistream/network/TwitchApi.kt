@@ -8,6 +8,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.json.JSONArray
 import org.json.JSONObject
 
 class TwitchApi(
@@ -59,7 +60,8 @@ class TwitchApi(
                                 channelName = channel,
                                 title = item.optString("title", "Untitled stream"),
                                 thumbnailUrl = thumbnailUrl,
-                                watchUrl = "https://www.twitch.tv/$channel"
+                                watchUrl = "https://www.twitch.tv/$channel",
+                                twitchBroadcasterId = item.optString("user_id")
                             )
                         )
                     }
@@ -99,5 +101,97 @@ class TwitchApi(
                 displayName = item.optString("display_name", item.optString("login"))
             )
         }
+    }
+
+    suspend fun fetchGlobalBadges(authState: AuthState): Result<Map<String, String>> = withContext(Dispatchers.IO) {
+        runCatching {
+            val response = executeHelixRequest(
+                endpoint = "https://api.twitch.tv/helix/chat/badges/global",
+                authState = authState
+            )
+            parseBadgeMap(response.optJSONArray("data"))
+        }
+    }
+
+    suspend fun fetchChannelBadges(authState: AuthState, broadcasterId: String): Result<Map<String, String>> = withContext(Dispatchers.IO) {
+        runCatching {
+            val endpoint = "https://api.twitch.tv/helix/chat/badges".toHttpUrl()
+                .newBuilder()
+                .addQueryParameter("broadcaster_id", broadcasterId)
+                .build()
+                .toString()
+            val response = executeHelixRequest(endpoint, authState)
+            parseBadgeMap(response.optJSONArray("data"))
+        }
+    }
+
+    suspend fun fetchGlobalEmotes(authState: AuthState): Result<Map<String, String>> = withContext(Dispatchers.IO) {
+        runCatching {
+            val response = executeHelixRequest(
+                endpoint = "https://api.twitch.tv/helix/chat/emotes/global",
+                authState = authState
+            )
+            parseEmoteMap(response.optJSONArray("data"))
+        }
+    }
+
+    suspend fun fetchChannelEmotes(authState: AuthState, broadcasterId: String): Result<Map<String, String>> = withContext(Dispatchers.IO) {
+        runCatching {
+            val endpoint = "https://api.twitch.tv/helix/chat/emotes".toHttpUrl()
+                .newBuilder()
+                .addQueryParameter("broadcaster_id", broadcasterId)
+                .build()
+                .toString()
+            val response = executeHelixRequest(endpoint, authState)
+            parseEmoteMap(response.optJSONArray("data"))
+        }
+    }
+
+    private fun executeHelixRequest(endpoint: String, authState: AuthState): JSONObject {
+        val request = Request.Builder()
+            .url(endpoint)
+            .header("Client-Id", authState.twitchClientId)
+            .header("Authorization", "Bearer ${authState.twitchAccessToken}")
+            .get()
+            .build()
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) {
+                error("Twitch API error ${response.code} at $endpoint")
+            }
+            return JSONObject(response.body?.string().orEmpty())
+        }
+    }
+
+    private fun parseBadgeMap(data: JSONArray?): Map<String, String> {
+        if (data == null) return emptyMap()
+        val result = LinkedHashMap<String, String>()
+        for (i in 0 until data.length()) {
+            val setItem = data.optJSONObject(i) ?: continue
+            val setId = setItem.optString("set_id")
+            val versions = setItem.optJSONArray("versions") ?: continue
+            for (j in 0 until versions.length()) {
+                val version = versions.optJSONObject(j) ?: continue
+                val versionId = version.optString("id")
+                val url = version.optString("image_url_2x")
+                    .ifBlank { version.optString("image_url_1x") }
+                if (setId.isNotBlank() && versionId.isNotBlank() && url.isNotBlank()) {
+                    result["$setId/$versionId"] = url
+                }
+            }
+        }
+        return result
+    }
+
+    private fun parseEmoteMap(data: JSONArray?): Map<String, String> {
+        if (data == null) return emptyMap()
+        val result = LinkedHashMap<String, String>()
+        for (i in 0 until data.length()) {
+            val item = data.optJSONObject(i) ?: continue
+            val id = item.optString("id")
+            val code = item.optString("name")
+            if (id.isBlank() || code.isBlank()) continue
+            result[code] = "https://static-cdn.jtvnw.net/emoticons/v2/$id/default/dark/2.0"
+        }
+        return result
     }
 }

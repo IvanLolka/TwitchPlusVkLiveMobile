@@ -10,9 +10,12 @@ import com.ivanlolka.omnistream.auth.OAuthUrlFactory
 import com.ivanlolka.omnistream.chat.TwitchChatClient
 import com.ivanlolka.omnistream.data.AppStorage
 import com.ivanlolka.omnistream.model.AuthState
+import com.ivanlolka.omnistream.model.ChatEmote
+import com.ivanlolka.omnistream.model.EmoteSource
 import com.ivanlolka.omnistream.model.LiveStream
 import com.ivanlolka.omnistream.model.Platform
 import com.ivanlolka.omnistream.model.UnifiedChatMessage
+import com.ivanlolka.omnistream.network.SevenTvApi
 import com.ivanlolka.omnistream.network.TwitchApi
 import com.ivanlolka.omnistream.network.VkApi
 import kotlinx.coroutines.Dispatchers
@@ -33,10 +36,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application), T
     private val storage = AppStorage(application)
     private val httpClient = OkHttpClient.Builder().build()
     private val twitchApi = TwitchApi(httpClient)
+    private val sevenTvApi = SevenTvApi(httpClient)
     private val vkApi = VkApi(httpClient)
     private val twitchChatClient = TwitchChatClient(this)
 
     private var currentTwitchConnectionKey: String? = null
+    private var badgeImageUrlByKey: Map<String, String> = emptyMap()
 
     private val _authState = MutableStateFlow(storage.readAuthState())
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
@@ -58,6 +63,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application), T
 
     private val _chatMessages = MutableStateFlow<List<UnifiedChatMessage>>(emptyList())
     val chatMessages: StateFlow<List<UnifiedChatMessage>> = _chatMessages.asStateFlow()
+    private val _availableChatEmotes = MutableStateFlow<List<ChatEmote>>(emptyList())
+    val availableChatEmotes: StateFlow<List<ChatEmote>> = _availableChatEmotes.asStateFlow()
+    private val _chatEmoteUrlMap = MutableStateFlow<Map<String, String>>(emptyMap())
+    val chatEmoteUrlMap: StateFlow<Map<String, String>> = _chatEmoteUrlMap.asStateFlow()
 
     private val _twitchConnectionState = MutableStateFlow(TwitchChatClient.ConnectionState.DISCONNECTED)
     val twitchConnectionLabel: StateFlow<String> = _twitchConnectionState
@@ -94,6 +103,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application), T
             twitchUserId = ""
         )
         persistAuthState(updated)
+        resetChatAssets()
         syncTwitchChatConnection()
     }
 
@@ -272,17 +282,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application), T
             UnifiedChatMessage(
                 author = auth.twitchUsername.ifBlank { "You" },
                 text = text,
-                targets = targets
+                targets = targets,
+                sourcePlatform = if (targets.contains(Platform.TWITCH)) Platform.TWITCH else Platform.VK
             )
         )
     }
 
-    override fun onChatMessage(author: String, text: String) {
+    override fun onChatMessage(message: TwitchChatClient.IncomingTwitchMessage) {
+        val badgeUrls = message.badgeKeys.mapNotNull { key -> badgeImageUrlByKey[key] }
         appendChatMessage(
             UnifiedChatMessage(
-                author = author,
-                text = text,
-                targets = setOf(Platform.TWITCH)
+                author = message.displayName,
+                text = message.text,
+                targets = setOf(Platform.TWITCH),
+                sourcePlatform = Platform.TWITCH,
+                authorColorHex = message.colorHex,
+                badgeImageUrls = badgeUrls
             )
         )
     }
@@ -375,16 +390,65 @@ class MainViewModel(application: Application) : AndroidViewModel(application), T
         currentTwitchConnectionKey = newKey
 
         if (newKey == null) {
+            resetChatAssets()
             twitchChatClient.disconnect()
             return
         }
 
         val selectedStream = stream ?: return
+        refreshChatAssets(auth, selectedStream)
         twitchChatClient.connect(
             username = auth.twitchUsername,
             accessToken = auth.twitchAccessToken,
             channelName = selectedStream.channelName
         )
+    }
+
+    private fun refreshChatAssets(auth: AuthState, stream: LiveStream) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val mergedBadges = LinkedHashMap<String, String>()
+            twitchApi.fetchGlobalBadges(auth).onSuccess { mergedBadges.putAll(it) }
+            val broadcasterId = stream.twitchBroadcasterId.orEmpty()
+            if (broadcasterId.isNotBlank()) {
+                twitchApi.fetchChannelBadges(auth, broadcasterId).onSuccess { mergedBadges.putAll(it) }
+            }
+
+            val twitchEmotes = LinkedHashMap<String, String>()
+            twitchApi.fetchGlobalEmotes(auth).onSuccess { twitchEmotes.putAll(it) }
+            if (broadcasterId.isNotBlank()) {
+                twitchApi.fetchChannelEmotes(auth, broadcasterId).onSuccess { twitchEmotes.putAll(it) }
+            }
+
+            val sevenTvEmotes = LinkedHashMap<String, String>()
+            sevenTvApi.fetchGlobalEmotes().onSuccess { sevenTvEmotes.putAll(it) }
+            if (broadcasterId.isNotBlank()) {
+                sevenTvApi.fetchChannelEmotes(broadcasterId).onSuccess { sevenTvEmotes.putAll(it) }
+            }
+
+            val mergedEmotes = LinkedHashMap<String, String>()
+            mergedEmotes.putAll(twitchEmotes)
+            sevenTvEmotes.forEach { (code, url) ->
+                if (!mergedEmotes.containsKey(code)) mergedEmotes[code] = url
+            }
+
+            val picker = mergedEmotes.entries.take(MAX_EMOTE_PICKER_ITEMS).map { (code, url) ->
+                ChatEmote(
+                    code = code,
+                    imageUrl = url,
+                    source = if (twitchEmotes.containsKey(code)) EmoteSource.TWITCH else EmoteSource.SEVEN_TV
+                )
+            }
+
+            badgeImageUrlByKey = mergedBadges
+            _availableChatEmotes.value = picker
+            _chatEmoteUrlMap.value = mergedEmotes
+        }
+    }
+
+    private fun resetChatAssets() {
+        badgeImageUrlByKey = emptyMap()
+        _availableChatEmotes.value = emptyList()
+        _chatEmoteUrlMap.value = emptyMap()
     }
 
     private fun appendChatMessage(message: UnifiedChatMessage) {
@@ -412,6 +476,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application), T
 
     private companion object {
         const val MAX_CHAT_MESSAGES = 400
+        const val MAX_EMOTE_PICKER_ITEMS = 220
     }
 }
 

@@ -5,5 +5,8 @@ data class UnifiedChatMessage(
     val author: String,
     val text: String,
     val targets: Set<Platform> = emptySet(),
-    val isSystem: Boolean = false
+    val isSystem: Boolean = false,
+    val sourcePlatform: Platform? = null,
+    val authorColorHex: String? = null,
+    val badgeImageUrls: List<String> = emptyList()
 )
